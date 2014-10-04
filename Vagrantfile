@@ -1,5 +1,3 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
 
 # General project settings
 #################################
@@ -22,11 +20,11 @@ Vagrant.configure("2") do |config|
     config.berkshelf.enabled = true
 
     # Define VM box to use
-    config.vm.box = "precise32"
-    config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+    config.vm.box = "ubuntu-trusty"
+    config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
     # Set share folder
-    config.vm.synced_folder "./" , "/var/www/" + project_name + "/", :mount_options => ["dmode=777", "fmode=666"]
+    config.vm.synced_folder "./" , "/var/www/" + project_name + "/", :mount_options => ["dmode=777", "fmode=666"] 
 
     # Use hostonly network with a static IP Address and enable
     # hostmanager so we can have a custom domain for the server
@@ -40,16 +38,17 @@ Vagrant.configure("2") do |config|
     end
 
     config.vm.provider "virtualbox" do |v|
-      v.name = "vagrant-" + project_name
-      v.memory = 1024
+      v.name = project_name
+      v.memory = 2048
       v.cpus = 2
+      v.gui = false
     end
 
     config.vm.provision :hostmanager
 
     # Make sure that the newest version of Chef have been installed
-    config.vm.provision :shell, :inline => "apt-get update -qq && apt-get install make ruby1.9.1-dev --no-upgrade --yes"
-    config.vm.provision :shell, :inline => "gem install chef --version 11.6.0 --no-rdoc --no-ri --conservative"
+    config.vm.provision :shell, :inline => "apt-get update -qq --no-upgrade --yes"
+    config.vm.provision :shell, :inline => "gem install chef"
 
     # Povision using Chef Solo
     config.vm.provision :chef_solo do |chef|
@@ -75,19 +74,16 @@ Vagrant.configure("2") do |config|
 
                 ##### Packages Needed #####
                  # Ubuntu
-                :apt_pkgs       	=> %w{ vim zsh git screen curl },
+                :apt_pkgs       	=> %w{ vim git screen curl wget mc telnet },
 
                 # Node/NPM
-                :npm_pkgs   		=> %w{ grunt-cli },
+                :npm_pkgs   		=> %w{ grunt-cli bower },
 
                 #Needs to match mysql password for phpMyAdmin install
                 :db_password 		=> database_password
             },
             :apache => {
                 :default_modules         => %w{ status alias auth_basic authn_file autoindex dir env mime negotiation setenvif rewrite ssl }
-            },
-            :npm => {
-                :version                 => "1.3.11"
             },
             :xdebug => {
                 :cli_color               => 1,

@@ -1,4 +1,6 @@
-site :opscode
+source "https://supermarket.getchef.com"
+
+metadata
 
 cookbook 'php'
 cookbook 'apt'
