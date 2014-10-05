@@ -11,7 +11,7 @@ ip_address = "10.1.1.1"
 project_name = "sampleproject"
 
 # MySQL and PostgreSQL password 
-database_password = "mysecretpassword"
+database_password = "password"
 
 # Vagrant configuration
 #################################
@@ -58,6 +58,10 @@ Vagrant.configure("2") do |config|
         chef.add_recipe "phpunit"
         chef.add_recipe "mysql::client"
         chef.add_recipe "mysql::server"
+        chef.add_recipe "mongodb"
+        chef.add_recipe "java"
+        chef.add_recipe "elasticsearch"
+        chef.add_recipe "varnish"
 
         chef.json = {
             :server=> {
@@ -109,13 +113,39 @@ Vagrant.configure("2") do |config|
                 :install_method          => 'composer'
             },
 
-	    #Databases, mySQL and PostgreSQL
+            # mysql database
             :mysql => {
                 :server_root_password    => database_password,
                 :server_repl_password    => database_password,
                 :server_debian_password  => database_password,
                 :bind_address            => ip_address,
                 :allow_remote_root       => true
+            },
+            :java => {
+                :install_flavor => "oracle",
+                :jdk_version    => "8",
+                :oracle => { :accept_oracle_download_terms => true }
+            },
+            :elasticsearch => {
+                :cluster => { :name => "elastic-vagrant" },
+
+                :version => "1.3.4",
+
+                :plugins => {
+                    'karmi/elasticsearch-paramedic' => {
+                      :url => 'https://github.com/karmi/elasticsearch-paramedic/archive/master.zip'
+                    }
+                },
+
+                :limits => {
+                    :nofile  => 1024,
+                    :memlock => 512
+                },
+
+                :logging => {
+                    :discovery => 'TRACE',
+                    'index.indexing.slowlog' => 'INFO, index_indexing_slow_log_file'
+                },
             },
         }
     end
