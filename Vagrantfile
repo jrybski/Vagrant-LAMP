@@ -103,8 +103,8 @@ Vagrant.configure("2") do |config|
                 :profiler_output_dir     => "/tmp/cachegrind"
             },
             :php => {
-                # PHP Modules
-                :packages                => %w{ php5 php5-dev php5-cli php-pear php5-apcu php5-mysql php5-curl php5-mcrypt php5-memcached php5-gd php5-json },
+                # PHP modules
+                :packages                => %w{ php5 php5-dev php5-cli php-pear php5-apcu php5-mysql php5-curl php5-mcrypt php5-memcached php5-gd php5-json php5-mongo },
 
                 # Apache 2.4's conf directory for modules
                 :ext_conf_dir            => "/etc/php5/mods-available"
@@ -147,6 +147,10 @@ Vagrant.configure("2") do |config|
                     'index.indexing.slowlog' => 'INFO, index_indexing_slow_log_file'
                 },
             },
+            :mongodb => {
+                :package_version => "2.6.4",
+                :package_name => "mongodb-org"
+            }
         }
     end
 end
