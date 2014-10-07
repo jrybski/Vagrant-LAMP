@@ -17,6 +17,7 @@ database_password = "password"
 #################################
 Vagrant.configure("2") do |config|
     # Enable Berkshelf support
+    # http://berkshelf.com/
     config.berkshelf.enabled = true
 
     # Define VM box to use
@@ -29,6 +30,7 @@ Vagrant.configure("2") do |config|
     # Use hostonly network with a static IP Address and enable
     # hostmanager so we can have a custom domain for the server
     # by modifying the host machines hosts file
+    # https://github.com/smdahlen/vagrant-hostmanager
     config.hostmanager.enabled = true
     config.hostmanager.manage_host = true
     config.vm.define project_name do |node|
@@ -52,7 +54,8 @@ Vagrant.configure("2") do |config|
 
     # Povision using Chef Solo
     config.vm.provision :chef_solo do |chef|
-        chef.add_recipe "lamp::default"
+        chef.add_recipe "apache2"
+        chef.add_recipe "php"
         chef.add_recipe "memcached"
         chef.add_recipe "postfix"
         chef.add_recipe "phpunit"
@@ -62,6 +65,7 @@ Vagrant.configure("2") do |config|
         chef.add_recipe "java"
         chef.add_recipe "elasticsearch"
         chef.add_recipe "varnish"
+        chef.add_recipe "rabbitmq"
 
         chef.json = {
             :server=> {
@@ -74,7 +78,7 @@ Vagrant.configure("2") do |config|
                 :server_aliases 	=>  [ "www." + project_name + ".local" ],
 
                 # DocRoot
-                :docroot        	=> "/var/www/" + project_name,
+                :docroot        	=> "/var/www/" + project_name + "/web",
 
                 ##### Packages Needed #####
                  # Ubuntu
@@ -86,9 +90,11 @@ Vagrant.configure("2") do |config|
                 #Needs to match mysql password for phpMyAdmin install
                 :db_password 		=> database_password
             },
+
             :apache => {
                 :default_modules         => %w{ status alias auth_basic authn_file autoindex dir env mime negotiation setenvif rewrite ssl }
             },
+
             :xdebug => {
                 :cli_color               => 1,
                 :scream                  => 0,
@@ -102,13 +108,20 @@ Vagrant.configure("2") do |config|
                 :profiler_enable         => 0,
                 :profiler_output_dir     => "/tmp/cachegrind"
             },
+
+            # https://github.com/opscode-cookbooks/php/blob/master/attributes/default.rb
             :php => {
+                "version" => "5.6.1",
                 # PHP modules
                 :packages                => %w{ php5 php5-dev php5-cli php-pear php5-apcu php5-mysql php5-curl php5-mcrypt php5-memcached php5-gd php5-json php5-mongo },
 
                 # Apache 2.4's conf directory for modules
-                :ext_conf_dir            => "/etc/php5/mods-available"
+                :ext_conf_dir            => "/etc/php5/mods-available",
+                "directives" => {
+                    "date.timezone" => "Europe/Warsaw",
+                }
             },
+
             :phpunit => {
                 :install_method          => 'composer'
             },
