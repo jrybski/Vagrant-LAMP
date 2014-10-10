@@ -34,8 +34,23 @@ Vagrant.configure("2") do |config|
     config.hostmanager.enabled = true
     config.hostmanager.manage_host = true
     config.vm.define project_name do |node|
+        # local domain
         node.vm.hostname = project_name + ".local"
+        # ip address
         node.vm.network :private_network, ip: ip_address
+        #apache
+        node.vm.network :forwarded_port, guest: 80, host: 8080,
+          auto_correct: true
+        # rabbitmq administration panel
+        node.vm.network :forwarded_port, guest: 15672, host: 15672,
+          auto_correct: true
+        # elasticsearch
+        node.vm.network :forwarded_port, guest: 9200, host: 9200,
+          auto_correct: true
+        # mongodb
+        node.vm.network :forwarded_port, guest: 27017, host: 27017,
+          auto_correct: true
+
         node.hostmanager.aliases = [ "www." + project_name + ".local" ]
     end
 
