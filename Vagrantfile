@@ -6,6 +6,7 @@
 
 # Host Only Network IP Address
 ip_address = "10.1.1.1"
+domain = ".local"
 
 # The project name is base for directories, hostname and alike
 project_name = "sampleproject"
@@ -25,7 +26,7 @@ Vagrant.configure("2") do |config|
     config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
     # Set share folder
-    config.vm.synced_folder "./" , "/var/www/" + project_name + "/", :mount_options => ["dmode=777", "fmode=666"] 
+    config.vm.synced_folder "../" + project_name, "/var/www/" + project_name + "/", :mount_options => ["dmode=777", "fmode=666"] 
 
     # Use hostonly network with a static IP Address and enable
     # hostmanager so we can have a custom domain for the server
@@ -35,7 +36,7 @@ Vagrant.configure("2") do |config|
     config.hostmanager.manage_host = true
     config.vm.define project_name do |node|
         # local domain
-        node.vm.hostname = project_name + ".local"
+        node.vm.hostname = project_name + domain
         # ip address
         node.vm.network :private_network, ip: ip_address
         #apache
@@ -51,7 +52,7 @@ Vagrant.configure("2") do |config|
         node.vm.network :forwarded_port, guest: 27017, host: 27017,
           auto_correct: true
 
-        node.hostmanager.aliases = [ "www." + project_name + ".local" ]
+        node.hostmanager.aliases = [ "www." + project_name + domain ]
     end
 
     config.vm.provider "virtualbox" do |v|
@@ -69,7 +70,12 @@ Vagrant.configure("2") do |config|
 
     # Povision using Chef Solo
     config.vm.provision :chef_solo do |chef|
+        chef.add_recipe "ntp"
         chef.add_recipe "apache2"
+        chef.add_recipe "apache2::mod_ssl"
+        chef.add_recipe "apache2::mod_rewrite"
+        chef.add_recipe "apache2::mod_headers"
+        chef.add_recipe "apache2::mod_deflate"
         chef.add_recipe "php"
         chef.add_recipe "memcached"
         chef.add_recipe "postfix"
@@ -81,21 +87,26 @@ Vagrant.configure("2") do |config|
         chef.add_recipe "elasticsearch"
         chef.add_recipe "varnish"
         chef.add_recipe "rabbitmq"
+        chef.add_recipe "users"
+        chef.add_recipe "logrotate"
 
         chef.json = {
-            :server=> {
-                #Name
+            :ntp => {
+                :servers => ['0.ubuntu.pool.ntp.org', '1.ubuntu.pool.ntp.org', '2.ubuntu.pool.ntp.org', '3.ubuntu.pool.ntp.org']
+            },
+
+            :server => {
                 :name           	=> project_name,
 
-                ##### Apache VHost Setting #####
+                ##### Apache VHost #####
                 # Server name and alias
-                :server_name    	=> project_name + ".local",
-                :server_aliases 	=>  [ "www." + project_name + ".local" ],
+                :server_name    	=> project_name + domain,
+                :server_aliases 	=>  [ "www." + project_name + domain ],
 
                 # DocRoot
                 :docroot        	=> "/var/www/" + project_name + "/web",
 
-                ##### Packages Needed #####
+                ##### Packages needed #####
                  # Ubuntu
                 :apt_pkgs       	=> %w{ vim git screen curl wget mc telnet },
 
@@ -107,7 +118,18 @@ Vagrant.configure("2") do |config|
             },
 
             :apache => {
-                :default_modules         => %w{ status alias auth_basic authn_file autoindex dir env mime negotiation setenvif rewrite ssl }
+                :docroot_dir             => "/var/www/" + project_name + "/web",
+                :listen_ports            => ["80", "443"],
+                :contact                 => "webmaster@" + project_name + "",
+                :default_modules         => %w{ status alias auth_basic authn_file autoindex dir env mime negotiation setenvif rewrite ssl },
+                :web_app => {
+                    :name => "ads",
+                    :server_name => project_name + ".local",
+                    :server_aliases => "www." + project_name + ".local",
+                    :docroot => "/var/www/" + project_name + "/web",
+                    
+                    :enable => "true"
+                }
             },
 
             :xdebug => {
@@ -126,17 +148,16 @@ Vagrant.configure("2") do |config|
 
             # https://github.com/opscode-cookbooks/php/blob/master/attributes/default.rb
             :php => {
-                "version" => "5.6.1",
+                :version                 => "5.6.2",
                 # PHP modules
                 :packages                => %w{ php5 php5-dev php5-cli php-pear php5-apcu php5-mysql php5-curl php5-mcrypt php5-memcached php5-gd php5-json php5-mongo },
 
                 # Apache 2.4's conf directory for modules
                 :ext_conf_dir            => "/etc/php5/mods-available",
-                "directives" => {
+                :directives              => {
                     "date.timezone" => "Europe/Warsaw",
                 }
             },
-
             :phpunit => {
                 :install_method          => 'composer'
             },
