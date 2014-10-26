@@ -1,4 +1,3 @@
-
 # General project settings
 #################################
 
@@ -55,11 +54,11 @@ Vagrant.configure("2") do |config|
         node.hostmanager.aliases = [ "www." + project_name + domain ]
     end
 
-    config.vm.provider "virtualbox" do |v|
-      v.name = project_name
-      v.memory = 2048
-      v.cpus = 2
-      v.gui = false
+    config.vm.provider "virtualbox" do |vb|
+      vb.name = project_name
+      vb.memory = 2048
+      vb.cpus = 2
+      vb.gui = false
     end
 
     config.vm.provision :hostmanager
@@ -101,7 +100,7 @@ Vagrant.configure("2") do |config|
                 ##### Apache VHost #####
                 # Server name and alias
                 :server_name    	=> project_name + domain,
-                :server_aliases 	=>  [ "www." + project_name + domain ],
+                :server_aliases 	=> [ "www." + project_name + domain ],
 
                 # DocRoot
                 :docroot        	=> "/var/www/" + project_name + "/web",
@@ -148,7 +147,9 @@ Vagrant.configure("2") do |config|
 
             # https://github.com/opscode-cookbooks/php/blob/master/attributes/default.rb
             :php => {
+                :url                     => "http://us1.php.net/get",
                 :version                 => "5.6.2",
+                :checksum                => "f0b54371fae6d4b6b99fb3d360f086ac",
                 # PHP modules
                 :packages                => %w{ php5 php5-dev php5-cli php-pear php5-apcu php5-mysql php5-curl php5-mcrypt php5-memcached php5-gd php5-json php5-mongo },
 
@@ -158,6 +159,7 @@ Vagrant.configure("2") do |config|
                     "date.timezone" => "Europe/Warsaw",
                 }
             },
+
             :phpunit => {
                 :install_method          => 'composer'
             },
@@ -170,11 +172,15 @@ Vagrant.configure("2") do |config|
                 :bind_address            => ip_address,
                 :allow_remote_root       => true
             },
+
             :java => {
-                :install_flavor => "oracle",
-                :jdk_version    => "8",
-                :oracle => { :accept_oracle_download_terms => true }
+                :install_flavor          => "oracle",
+                :jdk_version             => "8",
+                :oracle                  => {
+                    :accept_oracle_download_terms => true
+                }
             },
+
             :elasticsearch => {
                 :cluster => { :name => "elastic-vagrant" },
 
@@ -196,6 +202,7 @@ Vagrant.configure("2") do |config|
                     'index.indexing.slowlog' => 'INFO, index_indexing_slow_log_file'
                 },
             },
+
             :mongodb => {
                 :package_version => "2.6.4",
                 :package_name => "mongodb-org"
