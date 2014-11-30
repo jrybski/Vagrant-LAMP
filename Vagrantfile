@@ -8,10 +8,10 @@ ip_address = "10.1.1.1"
 domain = ".local"
 
 # The project name is base for directories, hostname and alike
-project_name = "sampleproject"
+project_name = "ads"
 
-# MySQL and PostgreSQL password 
-database_password = "password"
+# MySQL configuration
+database_password = ""
 
 # Vagrant configuration
 #################################
@@ -111,9 +111,6 @@ Vagrant.configure("2") do |config|
 
                 # Node/NPM
                 :npm_pkgs   		=> %w{ grunt-cli bower },
-
-                #Needs to match mysql password for phpMyAdmin install
-                :db_password 		=> database_password
             },
 
             :apache => {
